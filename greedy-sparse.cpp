@@ -10,12 +10,8 @@ typedef pair<int, int> pii;
 typedef vector<int> vi;
 
 #ifndef TMAX
-// For C: -DTMAX=2500
-// For D: -DTMAX=220
-// For E: -DTMAX=500
 #error Pass -DTMAX=num tags
 #endif
-
 typedef bitset<TMAX> BS;
 
 int N;
@@ -78,19 +74,11 @@ problem read_problem() {
     return result;
 }
 
-int score(const BS& a, int as, const BS& b, int bs) {
-	int is = (int)(a & b).count();
-	as -= is;
-	bs -= is;
-	return min({is, as, bs});
-}
-
-int score(const BS& a, int as, const BS& b) {
-	return score(a, as, b, (int)b.count());
-}
-
 int score(const BS& a, const BS& b) {
-	return score(a, (int)a.count(), b);
+	int is = (int)(a & b).count();
+	int as = (int)a.count() - is;
+	int bs = (int)b.count() - is;
+	return min({is, as, bs});
 }
 
 BS tomask(problem& pr, pii pa) {
@@ -106,10 +94,16 @@ pii pickBest(problem& pr, pii curv) {
 	BS cur = tomask(pr, curv);
 	int bestHs = -1, bestVe = -1;
 	int bestHsi = -1, bestVei = -1;
-	int curs = (int)cur.count();
+	vi relevant;
+	for (int v : {curv.first, curv.second}) {
+		if (v == -1) continue;
+		trav(t, pr.photos[v].tags) trav(i, photosForTag[t])
+			relevant.push_back(i);
+	}
+	cerr << sz(relevant) << ' ' << N << endl;
 
 	rep(i,0,N) if (!used[i]) {
-		int sc = score(cur, curs, pr.photos[i].bs, sz(pr.photos[i].tags));
+		int sc = score(cur, pr.photos[i].bs);
 		if (pr.photos[i].horisontal && sc > bestHs) bestHs = sc, bestHsi = i;
 		if (!pr.photos[i].horisontal && sc > bestVe) bestVe = sc, bestVei = i;
 	}
@@ -117,7 +111,7 @@ pii pickBest(problem& pr, pii curv) {
 	if (bestVei != -1) {
 		BS bestvbs = pr.photos[bestVei].bs;
 		rep(i,0,N) if (!used[i] && !pr.photos[i].horisontal) {
-			int sc = score(cur, curs, pr.photos[i].bs | bestvbs);
+			int sc = score(cur, pr.photos[i].bs | bestvbs);
 			if (sc > bestVe2 && i != bestVei) bestVe2 = sc, bestVei2 = i;
 		}
 		if (bestVei2 == -1) bestVei = -1;
