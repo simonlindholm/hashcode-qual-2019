@@ -51,56 +51,45 @@ for pic in xrange(n):
     else:
         verts.append(pic)
 
-print len(horis)
-print len(verts)
-print [len(tags_by_pic[i]) for i in xrange(10)]
-for pic1 in xrange(20):
-    left = tags_by_pic[randint(0, len(verts)-1)]
-    best1 = 0
-    best2 = 0
-    best3 = 0
-    for pic2 in verts:
-        right = tags_by_pic[pic2]
-        inter = left & right
-        if len(inter) > best1:
-            best3 = best2
-            best2 = best1
-            best1 = len(inter)
+# Construct graph
+neis = [0]*n
+for pic in xrange(n):
+    neis[pic] = set()
+    for tag in tags_by_pic[pic]:
+        for pic2 in pics_by_tag[tag]:
+            neis[pic].add(pic2)
+    neis[pic].remove(pic)
 
-    print best1,best2+best3
-#        print len(left) - len(inter), len(inter), len(right) - len(inter)
-#        best = max(best, min(len(left) - len(inter), len(inter), len(right) - len(inter)))
+used = [False]*n
+next_pos = 0
+curr = randint(0,n-1)
+slides = []
+score = n
 
+for pos in xrange(n-1):
+    # Move to the lowest degree neighbor
+    best = 100
+    best_nei = -1
+    for nei in neis[curr]:
+        #print neis[nei]
+        if len(neis[nei]) < best:
+            best = nei
+            best_nei = nei
+        neis[nei].remove(curr)
 
-# Pair verts
-shuffle(verts)
-paired = zip(verts[::2], verts[1::2])
-if len(paired) > 0 and paired[-1][1] == None:
-    paired = paired[:-1]
-slides = horis + paired
+    used[curr] = True
+    slides.append([curr])
+    curr = best_nei
+    # If no neighbor, start over
+    if curr == -1:
+        score -= 1
+        while used[next_pos]:
+            next_pos += 1
+        curr = next_pos
 
-num = len(slides)
-t0 = time()
-best_score = 0
-best = []
+slides.append([curr])
 
-# Randomly permute solution and keep best
-count = 0
-#while time()-t0 < 1:
-#    count += 1
-#    pos1 = randint(0,num)
-#    pos2 = randint(0,num)
-#    pos1, pos2 = min(pos1, pos2), max(pos1, pos2)
-#
-#    slides = slides[:pos1] + slides[pos1:pos2][::-1] + slides[pos2:]
-#
-#    new_score = score(slides, tags_by_pic)
-#    if new_score >= best_score:
-#        best_score = new_score
-#        best = slides
-#    else:
-#        slides = best
-
-print num
-#for slide in best:
-#    print " ".join(map(str, slide))
+print n
+#print score*3
+for slide in slides:
+    print " ".join(map(str, slide))
