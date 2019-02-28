@@ -22,6 +22,7 @@ int N;
 vector<bool> used;
 
 vector<vi> photosForTag;
+vector<vi> orders;
 
 struct photo {
 	bool horisontal;
@@ -102,29 +103,45 @@ BS tomask(problem& pr, pii pa) {
 	return ret;
 }
 
-pii pickBest(problem& pr, pii curv) {
+pii pickBest(problem& pr, pii curv, const vi& ord) {
 	BS cur = tomask(pr, curv);
-	int bestHs = -1, bestVe = -1;
-	int bestHsi = -1, bestVei = -1;
+	const int NUM_V = 4;
+	int bestVe[NUM_V];
+	int bestVei[NUM_V];
+	rep(i,0,NUM_V) bestVe[i] = -1, bestVei[i] = -1;
+	int bestHs = -1;
+	int bestHsi = -1;
 	int curs = (int)cur.count();
+
+	auto addVert = [&](int sc, int i) {
+		if (sc <= bestVe[NUM_V - 1]) return;
+		bestVe[NUM_V - 1] = sc;
+		bestVei[NUM_V - 1] = i;
+		for (int j = NUM_V-1; j > 0; --j) {
+			if (bestVe[j] > bestVe[j-1]) {
+				swap(bestVe[j], bestVe[j-1]);
+				swap(bestVei[j], bestVei[j-1]);
+			} else break;
+		}
+	};
 
 	rep(i,0,N) if (!used[i]) {
 		int sc = score(cur, curs, pr.photos[i].bs, sz(pr.photos[i].tags));
 		if (pr.photos[i].horisontal && sc > bestHs) bestHs = sc, bestHsi = i;
-		if (!pr.photos[i].horisontal && sc > bestVe) bestVe = sc, bestVei = i;
-	}
-	int bestVe2 = -1, bestVei2 = -1;
-	if (bestVei != -1) {
-		BS bestvbs = pr.photos[bestVei].bs;
-		rep(i,0,N) if (!used[i] && !pr.photos[i].horisontal) {
-			int sc = score(cur, curs, pr.photos[i].bs | bestvbs);
-			if (sc > bestVe2 && i != bestVei) bestVe2 = sc, bestVei2 = i;
-		}
-		if (bestVei2 == -1) bestVei = -1;
+		if (!pr.photos[i].horisontal) addVert(sc, i);
 	}
 
-	if (bestVe2 > bestHs * 1.5) { // (not the best heuristic)
-		return {bestVei, bestVei2};
+	int bestVe2 = -1, bestVei2 = -1, bestVei3 = -1;
+	rep(ind,0,NUM_V) if (bestVei[ind] != -1) {
+		BS bestvbs = pr.photos[bestVei[ind]].bs;
+		rep(i,0,N) if (!used[i] && !pr.photos[i].horisontal) {
+			int sc = score(cur, curs, pr.photos[i].bs | bestvbs);
+			if (sc > bestVe2 && i != bestVei[ind]) bestVe2 = sc, bestVei2 = i, bestVei3 = bestVei[ind];
+		}
+	}
+
+	if (bestVe2 > bestHs) { // (not the best heuristic?)
+		return {bestVei3, bestVei2};
 	} else {
 		return {bestHsi, -1};
 	}
@@ -136,14 +153,26 @@ int main() {
 	problem pr = read_problem();
 	N = pr.N;
 
-	used.resize(N);
+	ll bestscore = -1;
+	rep(i,0,1000) {
+		vi ord(N);
+		iota(all(ord), 0);
+		random_shuffle(all(ord));
+		orders.push_back(ord);
+	}
+
+	if (1) {
+	// rep(seed,1,1000) { srand(seed);
+	used.assign(N, false);
+	vi ord(N);
+	iota(all(ord), 0);
 
 	auto markUsed = [&](pii pa) {
 		used[pa.first] = 1;
 		if (pa.second != -1) used[pa.second] = 1;
 	};
 
-	pii cur = pickBest(pr, pii(-1, -1));
+	pii cur = pickBest(pr, pii(-1, -1), ord);
 	vector<pii> res = {cur};
 	markUsed(cur);
 	int it = 0;
@@ -151,7 +180,7 @@ int main() {
 	for (;;) {
 		++it;
 		if (it % 100 == 0) cerr << it << endl;
-		pii next = pickBest(pr, cur);
+		pii next = pickBest(pr, cur, ord); // orders[rand() % sz(orders)]);
 		if (next.first == -1) break;
 		res.push_back(next);
 
@@ -168,5 +197,9 @@ int main() {
 		cout << endl;
 	}
 
-	cerr << "score = " << myscore << endl;
+	if (myscore > bestscore) {
+		cerr << "score = " << myscore << endl;
+		bestscore = myscore;
+	}
+	}
 }

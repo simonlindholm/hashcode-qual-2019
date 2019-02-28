@@ -19,6 +19,7 @@ int N;
 vector<bool> used;
 
 vector<vi> photosForTag;
+vector<vi> orders;
 
 struct photo {
 	bool horisontal;
@@ -37,7 +38,8 @@ problem read_problem() {
     cin >> N;
     result.N = N;
 
-	map<string, int> tagmap;
+	unordered_map<string, int> tagmap;
+	tagmap.reserve(1000000);
 	auto tagtoi = [&](string& s) {
 		int& res = tagmap[s];
 		if (res) return res - 1;
@@ -120,7 +122,7 @@ vi tomask(problem& pr, pii pa) {
 	return ret;
 }
 
-pii pickBest(problem& pr, pii curv) {
+pii pickBest(problem& pr, pii curv, vi& ord) {
 	vi cur = tomask(pr, curv);
 	int bestHs = -1, bestVe = -1;
 	int bestHsi = -1, bestVei = -1;
@@ -131,6 +133,7 @@ pii pickBest(problem& pr, pii curv) {
 		trav(t, pr.photos[v].tags) trav(i, photosForTag[t])
 			relevant.push_back(i);
 	}
+	random_shuffle(all(relevant));
 	
 	// rep(i,0,N)
 	bool any = false;
@@ -166,27 +169,36 @@ pii pickBest(problem& pr, pii curv) {
 
 
 
-int main() {
+int main(int argc, char** argv) {
 	problem pr = read_problem();
 	N = pr.N;
+	ll bestscore = -1;
+	// rep(seed,1,1000) {
+	srand(72); // seed);
 
-	used.resize(N);
+	used.assign(N, false);
+	rep(i,0,1) {
+		vi ord(N);
+		iota(all(ord), 0);
+		random_shuffle(all(ord));
+		orders.push_back(ord);
+	}
 
 	auto markUsed = [&](pii pa) {
 		used[pa.first] = 1;
 		if (pa.second != -1) used[pa.second] = 1;
 	};
 
-	pii cur = pickBest(pr, pii(-1, -1));
+	pii cur = pickBest(pr, pii(-1, -1), orders[0]);
 	vector<pii> res = {cur};
 	markUsed(cur);
 	int it = 0;
 	ll myscore = 0;
 	for (;;) {
 		++it;
-		if (it % 100 == 0) cerr << it << endl;
+		// if (it % 100 == 0) cerr << it << endl;
 		//if(it == 500)break;
-		pii next = pickBest(pr, cur);
+		pii next = pickBest(pr, cur, orders[0]);
 		if (next.first == -1) break;
 		res.push_back(next);
 		
@@ -204,5 +216,11 @@ int main() {
 		cout << endl;
 	}
 	
-	cerr << "score = " << myscore << endl;
+	/*
+	if (myscore > bestscore) {
+		cerr << "seed = " << seed << ", score = " << myscore << endl;
+		bestscore = myscore;
+	}
+	}
+	*/
 }
