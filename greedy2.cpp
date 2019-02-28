@@ -18,6 +18,8 @@ typedef bitset<TMAX> BS;
 int N;
 vector<bool> used;
 
+vector<vi> photosForTag;
+
 struct photo {
 	bool horisontal;
 	vector<int> tags;
@@ -59,14 +61,16 @@ problem read_problem() {
         result.photos.push_back(ph);
     }
 	result.T = sz(tagmap);
-/*
+	photosForTag.resize(result.T);
+
 	rep(i,0,N) {
 		trav(t, result.photos[i].tags) {
-			assert(t < TMAX);
-			result.photos[i].bs[t] = 1;
+			//assert(t < TMAX);
+			//result.photos[i].bs[t] = 1;
+			photosForTag[t].push_back(i);
 		}
 	}
-*/
+
     return result;
 }
 
@@ -109,16 +113,27 @@ int score(const vi & a, const vi & b) {
 }
 
 vi tomask(problem& pr, pii pa) {
+	if(pa.first == -1)return vi();
 	vi ret = pr.photos[pa.first].tags;
 	if (pa.second != -1)
 		ret = merg_slow(ret, pr.photos[pa.second].tags);
 	return ret;
 }
 
-pii pickBest(problem& pr, vi cur) {
+pii pickBest(problem& pr, pii curv) {
+	vi cur = tomask(pr, curv);
 	int bestHs = -1, bestVe = -1;
 	int bestHsi = -1, bestVei = -1;
-	rep(i,0,N) if (!used[i]) {
+	
+	vi relevant;
+	for (int v : {curv.first, curv.second}) {
+		if (v == -1) continue;
+		trav(t, pr.photos[v].tags) trav(i, photosForTag[t])
+			relevant.push_back(i);
+	}
+	
+	// rep(i,0,N)
+	trav(i,relevant) if (!used[i]) {
 		int sc = score(cur, pr.photos[i].tags);
 		if (pr.photos[i].horisontal && sc > bestHs) bestHs = sc, bestHsi = i;
 		if (!pr.photos[i].horisontal && sc > bestVe) bestVe = sc, bestVei = i;
@@ -153,17 +168,21 @@ int main() {
 		if (pa.second != -1) used[pa.second] = 1;
 	};
 
-	pii cur = pickBest(pr, vi());
+	pii cur = pickBest(pr, pii(-1, -1));
 	vector<pii> res = {cur};
 	markUsed(cur);
 	int it = 0;
+	ll myscore = 0;
 	for (;;) {
 		++it;
 		if (it % 100 == 0) cerr << it << endl;
-		if(it == 500)break;
-		pii next = pickBest(pr, tomask(pr, cur));
+		//if(it == 500)break;
+		pii next = pickBest(pr, cur);
 		if (next.first == -1) break;
 		res.push_back(next);
+		
+		myscore += score(tomask(pr, cur), tomask(pr, next));
+		
 		cur = next;
 		markUsed(cur);
 		// score(mask(cur), mask(next));
@@ -175,4 +194,6 @@ int main() {
 		if (pa.second != -1) cout << ' ' << pa.second;
 		cout << endl;
 	}
+	
+	cerr << "score = " << myscore << endl;
 }
