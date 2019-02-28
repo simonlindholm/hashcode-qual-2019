@@ -93,8 +93,8 @@ vi merg_slow(vi &p1, vi &p2){ // assumes sorted
 }
 
 int intersection_slow(vi const &p1, vi const &p2){ // assumes sorted
-    ll r2 = 0;
-    ll ans = 0;
+    int r2 = 0;
+    int ans = 0;
     for(int c1 = 0; c1 < sz(p1); c1++){
         while(r2 < sz(p2) && p2[r2] < p1[c1]){
             r2++;
@@ -133,11 +133,20 @@ pii pickBest(problem& pr, pii curv) {
 	}
 	
 	// rep(i,0,N)
+	bool any = false;
 	trav(i,relevant) if (!used[i]) {
 		int sc = score(cur, pr.photos[i].tags);
 		if (pr.photos[i].horisontal && sc > bestHs) bestHs = sc, bestHsi = i;
 		if (!pr.photos[i].horisontal && sc > bestVe) bestVe = sc, bestVei = i;
+		any = true;
 	}
+	if (!any) rep(i,0,N) if (!used[i]) {
+		int sc = score(cur, pr.photos[i].tags);
+		if (pr.photos[i].horisontal && sc > bestHs) bestHs = sc, bestHsi = i;
+		if (!pr.photos[i].horisontal && sc > bestVe) bestVe = sc, bestVei = i;
+		break;
+	}
+
 	int bestVe2 = -1, bestVei2 = -1;
 	if (bestVei != -1) {
 		vi bestvbs = pr.photos[bestVei].tags;
