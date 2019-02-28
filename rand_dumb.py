@@ -51,6 +51,14 @@ for pic in xrange(n):
     else:
         verts.append(pic)
 
+print [len(tags_by_pic[i]) for i in xrange(10)]
+left = tags_by_pic[randint(0, len(horis)-1)]
+for right in xrange(len(horis)):
+    right = tags_by_pic[randint(0, len(horis)-1)]
+    inter = left & right
+    if len(inter) > 0:
+        print len(left) - len(inter), len(inter), len(right) - len(inter)
+
 # Pair verts
 shuffle(verts)
 paired = zip(verts[::2], verts[1::2])
@@ -63,23 +71,23 @@ t0 = time()
 best_score = 0
 best = []
 
+# Randomly permute solution and keep best
 count = 0
-while time()-t0 < 1:
-    count += 1
-    pos1 = randint(0,num)
-    pos2 = randint(0,num)
-    pos1, pos2 = min(pos1, pos2), max(pos1, pos2)
+#while time()-t0 < 1:
+#    count += 1
+#    pos1 = randint(0,num)
+#    pos2 = randint(0,num)
+#    pos1, pos2 = min(pos1, pos2), max(pos1, pos2)
+#
+#    slides = slides[:pos1] + slides[pos1:pos2][::-1] + slides[pos2:]
+#
+#    new_score = score(slides, tags_by_pic)
+#    if new_score >= best_score:
+#        best_score = new_score
+#        best = slides
+#    else:
+#        slides = best
 
-    slides = slides[:pos1] + slides[pos1:pos2][::-1] + slides[pos2:]
-
-    new_score = score(slides, tags_by_pic)
-    if new_score >= best_score:
-        best_score = new_score
-        best = slides
-    else:
-        slides = best
-
-#print count
 print num
-for slide in best:
-    print " ".join(map(str, slide))
+#for slide in best:
+#    print " ".join(map(str, slide))
