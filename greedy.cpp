@@ -10,12 +10,18 @@ typedef pair<int, int> pii;
 typedef vector<int> vi;
 
 #ifndef TMAX
+// For C: -DTMAX=2500
+// For D: -DTMAX=220
+// For E: -DTMAX=500
 #error Pass -DTMAX=num tags
 #endif
+
 typedef bitset<TMAX> BS;
 
 int N;
 vector<bool> used;
+
+vector<vi> photosForTag;
 
 struct photo {
 	bool horisontal;
@@ -59,35 +65,51 @@ problem read_problem() {
     }
 	result.T = sz(tagmap);
 
+	photosForTag.resize(result.T);
+
 	rep(i,0,N) {
 		trav(t, result.photos[i].tags) {
 			assert(t < TMAX);
 			result.photos[i].bs[t] = 1;
+			photosForTag[t].push_back(i);
 		}
 	}
 
     return result;
 }
 
-int score(const BS& a, const BS& b) {
+int score(const BS& a, int as, const BS& b, int bs) {
 	int is = (int)(a & b).count();
-	int as = (int)a.count() - is;
-	int bs = (int)b.count() - is;
+	as -= is;
+	bs -= is;
 	return min({is, as, bs});
 }
 
+int score(const BS& a, int as, const BS& b) {
+	return score(a, as, b, (int)b.count());
+}
+
+int score(const BS& a, const BS& b) {
+	return score(a, (int)a.count(), b);
+}
+
 BS tomask(problem& pr, pii pa) {
-	BS ret = pr.photos[pa.first].bs;
+	BS ret{};
+	if (pa.first != -1)
+		ret |= pr.photos[pa.first].bs;
 	if (pa.second != -1)
 		ret |= pr.photos[pa.second].bs;
 	return ret;
 }
 
-pii pickBest(problem& pr, BS cur) {
+pii pickBest(problem& pr, pii curv) {
+	BS cur = tomask(pr, curv);
 	int bestHs = -1, bestVe = -1;
 	int bestHsi = -1, bestVei = -1;
+	int curs = (int)cur.count();
+
 	rep(i,0,N) if (!used[i]) {
-		int sc = score(cur, pr.photos[i].bs);
+		int sc = score(cur, curs, pr.photos[i].bs, sz(pr.photos[i].tags));
 		if (pr.photos[i].horisontal && sc > bestHs) bestHs = sc, bestHsi = i;
 		if (!pr.photos[i].horisontal && sc > bestVe) bestVe = sc, bestVei = i;
 	}
@@ -95,13 +117,13 @@ pii pickBest(problem& pr, BS cur) {
 	if (bestVei != -1) {
 		BS bestvbs = pr.photos[bestVei].bs;
 		rep(i,0,N) if (!used[i] && !pr.photos[i].horisontal) {
-			int sc = score(cur, pr.photos[i].bs | bestvbs);
+			int sc = score(cur, curs, pr.photos[i].bs | bestvbs);
 			if (sc > bestVe2 && i != bestVei) bestVe2 = sc, bestVei2 = i;
 		}
 		if (bestVei2 == -1) bestVei = -1;
 	}
 
-	if (bestVe2 > bestHs) { // (not the best heuristic)
+	if (bestVe2 > bestHs * 1.5) { // (not the best heuristic)
 		return {bestVei, bestVei2};
 	} else {
 		return {bestHsi, -1};
@@ -121,19 +143,22 @@ int main() {
 		if (pa.second != -1) used[pa.second] = 1;
 	};
 
-	pii cur = pickBest(pr, BS());
+	pii cur = pickBest(pr, pii(-1, -1));
 	vector<pii> res = {cur};
 	markUsed(cur);
 	int it = 0;
+	ll myscore = 0;
 	for (;;) {
 		++it;
 		if (it % 100 == 0) cerr << it << endl;
-		pii next = pickBest(pr, tomask(pr, cur));
+		pii next = pickBest(pr, cur);
 		if (next.first == -1) break;
 		res.push_back(next);
+
+		myscore += score(tomask(pr, cur), tomask(pr, next));
+
 		cur = next;
 		markUsed(cur);
-		// score(mask(cur), mask(next));
 	}
 
 	cout << res.size() << endl;
@@ -142,4 +167,6 @@ int main() {
 		if (pa.second != -1) cout << ' ' << pa.second;
 		cout << endl;
 	}
+
+	cerr << "score = " << myscore << endl;
 }
