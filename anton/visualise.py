@@ -15,7 +15,8 @@ class Input:
 
 data = Input()
 
-print(len(set(it.chain(*data.tags))))
-print(data.N)
-# lens = list(map(len, data.tags))
+print('N,', data.N)
+print('n unique tags,', len(set(it.chain(*data.tags))))
+lens = list(map(len, data.tags))
+print('n tot tags,', sum(lens))
 # plt.hist()
