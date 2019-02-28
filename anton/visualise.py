@@ -21,7 +21,14 @@ print('n unique tags,', len(set(it.chain(*data.tags))))
 lens = list(map(len, data.tags))
 print('n tot tags,', sum(lens))
 
+plt.subplot(1, 2, 1)
 counts = Counter(it.chain(*data.tags))
 counts = list(sorted(counts.values()))
 plt.plot(counts)
+plt.title('n_occurences(tag)')
+
+plt.subplot(1, 2, 2)
+plt.plot(list(sorted(lens)))
+plt.title('n_tags(image)')
+
 plt.show()
