@@ -51,45 +51,60 @@ for pic in xrange(n):
     else:
         verts.append(pic)
 
-# Construct graph
-neis = [0]*n
-for pic in xrange(n):
-    neis[pic] = set()
-    for tag in tags_by_pic[pic]:
-        for pic2 in pics_by_tag[tag]:
-            neis[pic].add(pic2)
-    neis[pic].remove(pic)
+best_score = 0
+best_slides = []
+for samp in xrange(10):
+    # Construct graph
+    neis = [0]*n
+    for pic in xrange(n):
+        neis[pic] = set()
+        for tag in tags_by_pic[pic]:
+            for pic2 in pics_by_tag[tag]:
+                neis[pic].add(pic2)
+        neis[pic].remove(pic)
 
-used = [False]*n
-next_pos = 0
-curr = randint(0,n-1)
-slides = []
-score = n
+    # Sort pics by degree and make maps
+    counts = [(len(neis[pic]), pic) for pic in xrange(n)]
+    count_pos = [0]*n
+    counts.sort()
+    for pos in xrange(n):
+        count_pos[counts[pos][1]] = pos
 
-for pos in xrange(n-1):
-    # Move to the lowest degree neighbor
-    best = 100
-    best_nei = -1
-    for nei in neis[curr]:
-        #print neis[nei]
-        if len(neis[nei]) < best:
-            best = nei
-            best_nei = nei
-        neis[nei].remove(curr)
+    used = [False]*n
+    next_pos = 0
+    curr = randint(0,n-1)
+    slides = []
+    count = n
 
-    used[curr] = True
+    for pos in xrange(n-1):
+        # Move to the lowest degree neighbor
+        best = 100
+        best_nei = -1
+        for nei in neis[curr]:
+            #print neis[nei]
+            if len(neis[nei]) < best:
+                best = nei
+                best_nei = nei
+            neis[nei].remove(curr)
+
+        used[count_pos[curr]] = True
+        slides.append([curr])
+        curr = best_nei
+        # If no neighbor, start over
+        if curr == -1:
+            count -= 1
+            while used[next_pos]:
+                next_pos += 1
+            curr = counts[next_pos][1]
+
     slides.append([curr])
-    curr = best_nei
-    # If no neighbor, start over
-    if curr == -1:
-        score -= 1
-        while used[next_pos]:
-            next_pos += 1
-        curr = next_pos
-
-slides.append([curr])
+    #print count*3
+    #print score(slides, tags_by_pic)
+    if count > best_score:
+        best_score = count
+        best_slides = slides[:]
 
 print n
-#print score*3
-for slide in slides:
+#print score(best_slides, tags_by_pic)
+for slide in best_slides:
     print " ".join(map(str, slide))
